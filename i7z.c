@@ -56,7 +56,7 @@ int Extra7zFromMem(const WCHAR *target_path, char *data, size_t size)
             Byte *outBuffer = 0; /* it must be 0 before first call for each new archive. */
             size_t outBufferSize = 0;  /* it can have any value before first call (if outBuffer = 0) */
 
-            for (i = db.NumFiles-1; i >= 0; --i)
+            for (i = 0; i < db.NumFiles; ++i)
             {
                 size_t offset = 0;
                 size_t outSizeProcessed = 0;
@@ -80,9 +80,27 @@ int Extra7zFromMem(const WCHAR *target_path, char *data, size_t size)
                 wchar_t fullname[512];
                 memset(fullname,0,sizeof(fullname));
                 wcscpy(fullname,target_path);
+                wcscat(fullname,"/");
                 wcscat(fullname,temp);
                 if (res != SZ_OK)
                     break;
+
+                UInt16* name = temp;
+                int j;
+                for (j = 0; name[j] != 0; j++)
+                {
+                    if (name[j] == '/')
+                    {
+                        name[j] = 0;
+                        wchar_t tname[512];
+                        memset(tname,0,sizeof(fullname));
+                        wcscpy(tname,target_path);
+                        wcscat(tname,"/");
+                        wcscat(tname,name);
+                        MyCreateDir(tname);
+                        name[j] = CHAR_PATH_SEPARATOR;
+                    }
+                }
 
                 if (isDir)
                 {
@@ -95,7 +113,7 @@ int Extra7zFromMem(const WCHAR *target_path, char *data, size_t size)
                                          &blockIndex, &outBuffer, &outBufferSize,
                                          &offset, &outSizeProcessed,
                                          &allocImp, &allocTempImp);
-                    if (res != SZ_OK)
+                    if(res != SZ_OK)
                         break;
                 }
 
